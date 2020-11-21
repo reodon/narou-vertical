@@ -1,0 +1,168 @@
+				.then( doc => {
+						let noveltitle = doc.$('.novel_title');
+						let indexBox = doc.$('.index_box');
+						// let indexBox = doc.$('.index_box') || doc.$('.novel_sublist');
+						let pageNavi = doc.$('.page_navi'); /* nullable */
+						// if(!indexBox) alert(url);
+						container.iahBE(`<div id="toc-buttons">
+<div id="toc-open-close" class="toc-button"><a href="#">&nbsp;\u25b6&nbsp;ALL&nbsp;</a></div>
+</div>`);
+						container.iahBE(`<div class="toc-noveltitle" style="width: 100%; text-align: center; font-size: 1.5em; padding-bottom: 1em;">${noveltitle.textContent}</div>`);
+						// 													container.iahBE(`<div id="toc-buttons">
+						// <div id="toc-open" class="toc-button"><a href="#">&nbsp;open&nbsp;</a></div>
+						// <div id="toc-close" class="toc-button"><a href="#">&nbsp;close&nbsp;</a></div>
+						// </div>`);
+						$('#toc-buttons').addEventListener('click', e => {
+								e.stopImmediatePropagation();
+								e.currentTarget.style.display = 'none';
+								// console.log(`clientX: ${e.clientX}, offsetX: ${e.offsetX}, pageX: ${e.pageX}`);
+								// console.log(`clientY: ${e.clientY}, offsetY: ${e.offsetY}, pageY: ${e.pageY}`);
+								let x = e.clientX;
+								let y = e.clientY;
+								let elem = document.elementFromPoint(x, y);
+								elem.click();
+								/**/debug(elem, 'elem');
+								e.currentTarget.style.display = 'flex';
+						});
+						if($('#toc-open-close'))
+								$('#toc-open-close').addEventListener('click', e => {
+										e.preventDefault(); e.stopImmediatePropagation();
+										let a = e.currentTarget.$('a');
+										if(~a.textContent.search('\u25bc')){ /* open */
+												for(let e of $$('#toc-c .toc-chapter-title')){
+														e.classList.toggle('toc-opened', false);
+														e.parentNode.$('.toc-chapter-sections').style.display = 'none';
+												}
+												a.textContent = a.textContent.replace(/\u{25bc}/u, '\u25b6');
+										}
+										else {
+												for(let e of $$('#toc-c .toc-chapter-title')){
+														e.classList.toggle('toc-opened', true);
+														e.parentNode.$('.toc-chapter-sections').style.display = 'block';
+												}
+												a.textContent = a.textContent.replace(/\u{25b6}/u, '\u25bc');
+										} }, {passive: false});
+						if($('#toc-open'))
+								$('#toc-open').addEventListener('click', e => {
+										e.preventDefault(); e.stopImmediatePropagation();
+										for(let e of $$('#toc-c .toc-chapter-title')){
+												e.classList.toggle('toc-opened', true);
+												e.parentNode.$('.toc-chapter-sections').style.display = 'block';
+										} }, {passive: false});
+						if($('#toc-close'))
+								$('#toc-close').addEventListener('click', e => {
+										e.preventDefault(); e.stopImmediatePropagation();
+										for(let e of $$('#toc-c .toc-chapter-title')){
+												e.classList.toggle('toc-opened', false);
+												e.parentNode.$('.toc-chapter-sections').style.display = 'none';
+										} }, {passive: false});
+						
+						let chapter;
+						let title;
+						let sections;
+						let n = 1;
+						const displaySections = e => {
+								e.preventDefault(); e.stopImmediatePropagation();
+								/* console.log(e.currentTarget); */
+								e.currentTarget.classList.toggle('toc-opened');
+								let sections = e.currentTarget.parentNode.$('.toc-chapter-sections');
+								/* console.log(sections); */
+								sections.style.display = sections.style.display == 'none' ? 'block' : 'none';
+								e.currentTarget.classList.contains('toc-opened') && e.currentTarget.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'nearest'});
+								// e.currentTarget.classList.contains('toc-opened') && e.currentTarget.scrollIntoView(true);
+						};
+						if(!isMobile)
+								Array.from(indexBox.children).forEach( (v, i, a) => {
+										if(v.className === 'chapter_title'){
+												chapter = document.createElement('div');
+												chapter.className = 'toc-chapter';
+												title = document.createElement('div');
+												title.className = 'toc-chapter-title';
+												title.iahAB(`<span><span><span class="toc-angle">${options.useWebfontForButtons ? '<i class="fas fa-caret-right fa-fw fa-xs"></i>' : '\u25b6'}</span>\u00a0\u00a0${v.textContent}</span><span>${n}~</span></span>`);
+												title.addEventListener('click', displaySections, {passive: false});
+												sections = document.createElement('div');
+												sections.className = 'toc-chapter-sections';
+												sections.style = 'display: none;';
+												chapter.iaeBE(title);
+												chapter.iaeBE(sections);
+												container.iaeBE(chapter);
+												/* chapter.iaeAB(v); */
+										}
+										else {
+												let a = v.$('a');
+												a.addEventListener('click', e => { jumpToURL(a.href)(e); $('#toc-cc').click(); }, {passive: false});
+												// a.addEventListener('click', jumpToSection, {passive: false});
+												// /**/debug(sections, 'sections');
+												if(!sections){
+														sections = document.createElement('div');
+														sections.className = 'toc-chapter-sections';
+														sections.style = 'display: block;';
+														// chapter.iaeBE(title);
+														// chapter.iaeBE(sections);
+														container.iaeBE(sections);
+												}
+												sections.iahBE(`<span>${n}</span>.&nbsp;&nbsp;`);
+												sections.iaeBE(a);
+												sections.iahBE('<br>');
+												n++;
+										}
+								});
+						else {
+								// if(!indexBox)
+								indexBox = doc.$('.novel_sublist').$$('li');
+								(async function(){
+										if(pageNavi){
+												for(let v of Array.from(pageNavi.$$('a')).slice(0, -2)){
+														/**/debug(v.href, 'v.href');
+														let sublist = await fetch(v.href)
+																.then(parse)
+																.then( doc => {
+																		// indexBox = [ ...indexBox, ...doc.$('.novel_sublist').$$('li') ];
+																		return doc.$('.novel_sublist').$$('li');
+																});
+														indexBox = [ ...indexBox, ...sublist ];
+												}
+										}
+										
+										/**/debug(indexBox, 'indexBox');
+										indexBox.forEach( (v, i, a) => {
+												if(v.className === 'chapter'){
+														chapter = document.createElement('div');
+														chapter.className = 'toc-chapter';
+														title = document.createElement('div');
+														title.className = 'toc-chapter-title';
+														title.iahAB(`<span><span><span class="toc-angle">${options.useWebfontForButtons ? '<i class="fas fa-caret-right fa-fw fa-xs"></i>' : '\u25b6'}</span>\u00a0\u00a0${v.textContent}</span><span>${n}~</span></span>`);
+														title.addEventListener('click', displaySections, {passive: false});
+														sections = document.createElement('div');
+														sections.className = 'toc-chapter-sections';
+														sections.style = 'display: none;';
+														chapter.iaeBE(title);
+														chapter.iaeBE(sections);
+														container.iaeBE(chapter);
+														/* chapter.iaeAB(v); */
+												}
+												else {
+														let a = v.$('a');
+														a.addEventListener('click', e => { e.stopImmediatePropagation(); jumpToURL(a.href)(e); $('#toc-cc').click(); }, {passive: false});
+														// a.addEventListener('click', e => { e.stopImmediatePropagation(); jumpToSection(e); }, {passive: false});
+														if(!sections){
+																sections = document.createElement('div');
+																sections.className = 'toc-chapter-sections';
+																sections.style = 'display: block;';
+																// chapter.iaeBE(title);
+																// chapter.iaeBE(sections);
+																container.iaeBE(sections);
+														}
+														sections.iahBE(`<span>${n}</span>.&nbsp;&nbsp;`);
+														sections.iaeBE(a);
+														sections.iahBE('<br>');
+														n++;
+												}
+										});
+								})();
+						}
+				});
+		// container.insertAdjacentHTML('afterbegin', html);
+		containerContainer.appendChild(container);
+		document.body.insertAdjacentElement('afterbegin', containerContainer);
+}

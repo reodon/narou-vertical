@@ -1,0 +1,40 @@
+<html>
+<head>
+</head>
+<body>
+		<script>
+		 console.log('start');
+		 window.onpopstate = e => {
+				 console.log('history.state.index: %o', history.state.index);
+				 hs.index = e.state ? history.state.index : -1;
+				 console.log('hs.stack[%o]: %o', hs.index, hs.stack[hs.index]);
+				 if(~hs.index)
+						 hs.stack[hs.index].callback();
+				 
+		 }
+
+		 class HistoryStack {
+				 constructor(){
+						 this.stack = [];
+						 this.index = -1;
+				 }
+
+				 push(state, title, url){
+						 history.pushState({index: ++this.index}, title, url);
+						 this.stack.splice(this.index, 1, state);
+				 }
+		 }
+
+		 let hs = new HistoryStack();
+		 hs.push({callback: f}, 'title', '#hoge' + hs.index);
+		 hs.push({callback: f}, 'title', '#hoge' + hs.index);
+		 hs.push({callback: f}, 'title', '#hoge' + hs.index);
+		 hs.push({callback: f}, 'title', '#hoge' + hs.index);
+		 console.log('end');
+
+		 function f(){
+				 console.log(hs.index);
+		 }
+		</script>
+</body>
+</html>
