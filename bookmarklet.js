@@ -1,5 +1,5 @@
 javascript:(()=>{
-    path = 'narou-8.js';
+    path = 'narou.js';
     prefix = 'https://raw.githubusercontent.com/reodon/narou-vertical/master/';
 
     try{
